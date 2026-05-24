@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hello Test 執行結果</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: #f8fafc;
+    }
+    .subtitle { color: #94a3b8; margin-bottom: 2rem; font-size: 0.9rem; }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .meta-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+    }
+    .meta-card .label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-card .value { font-size: 0.95rem; color: #e2e8f0; margin-top: 0.25rem; font-family: monospace; }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .test-list { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
+    .test-item {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .test-item.pass { border-left: 4px solid #22c55e; }
+    .test-item.fail { border-left: 4px solid #ef4444; }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+    .badge.pass { background: #166534; color: #86efac; }
+    .badge.fail { background: #7f1d1d; color: #fca5a5; }
+    .test-name { font-family: monospace; font-size: 0.9rem; color: #e2e8f0; flex: 1; }
+    .test-output { font-family: monospace; font-size: 0.8rem; color: #94a3b8; }
+
+    .summary-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .summary-text { font-size: 1.1rem; color: #e2e8f0; }
+    .summary-score {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #22c55e;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #334155;
+      border-radius: 9999px;
+      margin-top: 0.75rem;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #16a34a, #22c55e);
+      border-radius: 9999px;
+      width: 100%;
+      transition: width 0.5s ease;
+    }
+
+    .code-block {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #a3e635;
+      white-space: pre;
+      overflow-x: auto;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🐍 Hello Test 執行結果</h1>
+  <p class="subtitle">由 Python 自動執行 · 2026-05-24 10:07:56</p>
+
+  <div class="meta-grid">
+    <div class="meta-card">
+      <div class="label">Python 版本</div>
+      <div class="value">3.9.6</div>
+    </div>
+    <div class="meta-card">
+      <div class="label">平台</div>
+      <div class="value">Darwin 25.2.0</div>
+    </div>
+    <div class="meta-card">
+      <div class="label">執行時間</div>
+      <div class="value">2026-05-24 10:07:56</div>
+    </div>
+    <div class="meta-card">
+      <div class="label">測試檔案</div>
+      <div class="value">hello_test.py</div>
+    </div>
+  </div>
+
+  <p class="section-title">原始輸出</p>
+  <div class="code-block">=== Hello Test Runner ===
+Python: 3.9.6 (default, Aug  8 2025, 19:06:38)
+Platform: Darwin 25.2.0
+Time: 2026-05-24 10:07:56.056198
+
+  [✓] test_hello_returns_string: Hello, World!
+  [✓] test_hello_content: Expected 'Hello, World!', got 'Hello, World!'
+  [✓] test_hello_length: Length = 13
+
+Result: 3/3 tests passed</div>
+
+  <p class="section-title">測試項目</p>
+  <div class="test-list">
+    <div class="test-item pass">
+      <span class="badge pass">PASS</span>
+      <span class="test-name">test_hello_returns_string</span>
+      <span class="test-output">Hello, World!</span>
+    </div>
+    <div class="test-item pass">
+      <span class="badge pass">PASS</span>
+      <span class="test-name">test_hello_content</span>
+      <span class="test-output">Expected 'Hello, World!', got 'Hello, World!'</span>
+    </div>
+    <div class="test-item pass">
+      <span class="badge pass">PASS</span>
+      <span class="test-name">test_hello_length</span>
+      <span class="test-output">Length = 13</span>
+    </div>
+  </div>
+
+  <p class="section-title">測試總覽</p>
+  <div class="summary-card">
+    <div>
+      <div class="summary-text">所有測試通過 🎉</div>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+    </div>
+    <div class="summary-score">3 / 3</div>
+  </div>
+
+</body>
+</html>
