@@ -256,7 +256,7 @@ if pos:
             return ""
 
     pct_cols = [c for c in ["損益%", "1日%", "1週%", "1月%"] if c in pos_df.columns]
-    styled = pos_df.style.applymap(color_num, subset=pct_cols)
+    styled = pos_df.style.map(color_num, subset=pct_cols)
     st.dataframe(styled, use_container_width=True, hide_index=True)
 else:
     st.info("目前無持倉")
