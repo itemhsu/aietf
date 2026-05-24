@@ -47,14 +47,27 @@ src/tests/        ← 測試 (test_phase1.py ~ test_phase7.py)
 main.py           ← 主程式入口（GitHub Actions 呼叫）
 ```
 
+## Dashboard 雲端化設計（重要）
+
+Dashboard 採用**零 API 呼叫**設計：
+- `src/dashboard/data.py`：純 JSON 讀取函式（可單獨測試）
+- `src/dashboard/app.py`：Streamlit UI，只讀 JSON，不呼叫 Alpaca/yfinance
+- `benchmark_nav_history`（QQQ/SPY 歷史）由 GitHub Actions 預先存入報告 JSON
+- 部署至 Streamlit Community Cloud 只需連結 GitHub repo，不需任何 API 金鑰
+
+**Streamlit Cloud 部署步驟：**
+1. 前往 https://streamlit.io/cloud → New app
+2. 選擇 `itemhsu/aietf` repo，Branch: `main`，Main file: `streamlit_app.py`
+3. 點擊 Deploy（無需設定任何 Secrets）
+
 ## 快速啟動
 
 ```bash
 cp .env.example .env    # 填入 Alpaca Key & Gmail
 pip install -r requirements.txt
-DRY_RUN=true python main.py        # 模擬執行
-streamlit run src/dashboard/app.py # 啟動 Dashboard
-pytest src/tests/ -v               # 執行所有測試
+DRY_RUN=true python3 main.py        # 模擬執行
+streamlit run src/dashboard/app.py  # 啟動 Dashboard
+pytest src/tests/ -v                # 執行所有測試（71 個）
 ```
 
 ## 新增策略步驟

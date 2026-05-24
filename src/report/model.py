@@ -6,7 +6,7 @@ from datetime import datetime, date
 from pathlib import Path
 from src.data.market_data import StockData, fetch_performance
 from src.data.pe_ratio import fetch_pe_ratios
-from src.data.benchmark import fetch_benchmark_performance, fetch_benchmark_nav_history
+from src.data.benchmark import fetch_benchmark_performance, fetch_benchmark_nav_history, BENCHMARKS
 from src.engine.rebalancer import RebalanceOrder
 
 logger = logging.getLogger(__name__)
@@ -112,11 +112,28 @@ def build_report(
             "QQQ": benchmark.get("QQQ", {}),
             "SPY": benchmark.get("SPY", {}),
         },
+        # ── 預先抓取基準歷史（Dashboard 直接讀，不再即時呼叫 yfinance）
+        "benchmark_nav_history": _fetch_benchmark_nav_history_normalized(
+            len(history) + 10
+        ),
         "nav_history": history + [{"date": today, "nav": round(nav, 2)}],
         "watchlist": watchlist,
         "disclaimer": "⚠️ 本報告僅供資訊整理與研究參考，不構成任何投資建議。",
     }
     return report
+
+
+def _fetch_benchmark_nav_history_normalized(days: int = 90) -> dict:
+    """
+    預先抓取 QQQ/SPY 歷史，轉成以起始日 = 100 的標準化序列。
+    存入報告 JSON，Dashboard 不需再呼叫任何 API。
+    """
+    try:
+        raw = fetch_benchmark_nav_history(max(days, 30))
+        return raw
+    except Exception as e:
+        logger.warning(f"基準歷史取得失敗，存空值：{e}")
+        return {sym: [] for sym in BENCHMARKS}
 
 
 def save_report(report: dict) -> Path:
