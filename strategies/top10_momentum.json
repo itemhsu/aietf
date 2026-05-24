@@ -1,0 +1,41 @@
+{
+  "strategy_id": "top10_momentum_v1",
+  "name": "NASDAQ 動能前十策略",
+  "description": "選出過去 20 日漲幅最大的前 10 檔 NASDAQ 股票，等權重持倉",
+  "version": "1.0",
+  "universe": {
+    "exchange": "NASDAQ",
+    "symbols": ["AAPL","MSFT","NVDA","GOOGL","AMZN","META","TSM","AVGO","AMD","ORCL","CRM","ADBE","CSCO","QCOM","TXN","NOW","NFLX","UBER","SNOW","PLTR","INTC","IBM","V","MA","ASML"],
+    "min_market_cap_B": 50
+  },
+  "selection": {
+    "method": "momentum",
+    "top_n": 10,
+    "ranking_field": "momentum_20d",
+    "direction": "desc"
+  },
+  "allocation": {
+    "method": "equal_weight",
+    "weight_per_stock": 0.10,
+    "share_type": "integer_only",
+    "cash_buffer_pct": 0.01
+  },
+  "rebalance": {
+    "monthly_first_day": true,
+    "on_new_capital": true,
+    "new_capital_threshold_pct": 0.05,
+    "tolerance_pct": 0.02
+  },
+  "watchlist_categories": {
+    "ai_tech":  ["NVDA","MSFT","GOOGL","META","AMZN"],
+    "semicon":  ["TSM","ASML","AVGO","AMD","QCOM"],
+    "growth":   ["NFLX","UBER","SNOW","PLTR","CRM"]
+  },
+  "notification": {
+    "trade_alert": true,
+    "daily_email": true,
+    "email_time": "06:00",
+    "timezone": "Asia/Taipei"
+  },
+  "risk_disclaimer": "本策略僅供研究參考，不構成投資建議。"
+}

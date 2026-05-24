@@ -1,0 +1,55 @@
+name: Manual Rebalance Trigger
+
+on:
+  workflow_dispatch:
+    inputs:
+      account_id:
+        description: '帳戶 ID（必填）'
+        required: true
+        default: 'account_A'
+      dry_run:
+        description: '僅模擬不下單'
+        required: false
+        default: 'true'
+
+jobs:
+  manual-rebalance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - name: Run manual rebalance
+        env:
+          ALPACA_KEY_A:    ${{ secrets.ALPACA_KEY_A }}
+          ALPACA_SECRET_A: ${{ secrets.ALPACA_SECRET_A }}
+          ALPACA_URL_A:    ${{ secrets.ALPACA_URL_A }}
+          ALPACA_KEY_B:    ${{ secrets.ALPACA_KEY_B }}
+          ALPACA_SECRET_B: ${{ secrets.ALPACA_SECRET_B }}
+          ALPACA_URL_B:    ${{ secrets.ALPACA_URL_B }}
+          EMAIL_USER:      ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS:      ${{ secrets.EMAIL_PASS }}
+          DRY_RUN:         ${{ github.event.inputs.dry_run }}
+          ACCOUNT_FILTER:  ${{ github.event.inputs.account_id }}
+        run: python main.py
+
+      - name: Commit reports
+        run: |
+          git config user.name "AlpacaBot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/ accounts/
+          git diff --staged --quiet || git commit -m "🔄 Manual rebalance $(date -u +%Y-%m-%d)"
+          git push

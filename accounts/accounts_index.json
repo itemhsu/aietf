@@ -1,0 +1,24 @@
+{
+  "accounts": [
+    {
+      "account_id": "account_A",
+      "display_name": "主帳戶 (Paper)",
+      "alpaca_key_env": "ALPACA_KEY_A",
+      "alpaca_secret_env": "ALPACA_SECRET_A",
+      "alpaca_base_url_env": "ALPACA_URL_A",
+      "active_strategy": "top10_marketcap_v1",
+      "email_recipient": "itemhsu@gmail.com",
+      "enabled": true
+    },
+    {
+      "account_id": "account_B",
+      "display_name": "動能策略帳戶 (Paper)",
+      "alpaca_key_env": "ALPACA_KEY_B",
+      "alpaca_secret_env": "ALPACA_SECRET_B",
+      "alpaca_base_url_env": "ALPACA_URL_B",
+      "active_strategy": "top10_momentum_v1",
+      "email_recipient": "itemhsu@gmail.com",
+      "enabled": false
+    }
+  ]
+}
