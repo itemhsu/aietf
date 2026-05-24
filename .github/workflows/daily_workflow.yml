@@ -6,10 +6,15 @@ on:
     - cron: '0 22 * * 0-4'
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: '僅模擬不下單 (true/false)'
-        required: false
-        default: 'true'
+      mode:
+        description: '執行模式'
+        required: true
+        default: 'demo'
+        type: choice
+        options:
+          - demo      # 模擬資料，不需要 API Key
+          - dry_run   # 真實 API，計算但不下單
+          - live      # 真實 API，實際下單
       account_filter:
         description: '指定帳戶 ID（留空 = 全部帳戶）'
         required: false
@@ -39,17 +44,34 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run AlpacaBot (all accounts)
+      - name: Set mode flags
+        id: flags
+        run: |
+          MODE="${{ github.event.inputs.mode || 'demo' }}"
+          if [ "$MODE" = "demo" ]; then
+            echo "DEMO_MODE=true"  >> $GITHUB_ENV
+            echo "DRY_RUN=true"   >> $GITHUB_ENV
+          elif [ "$MODE" = "dry_run" ]; then
+            echo "DEMO_MODE=false" >> $GITHUB_ENV
+            echo "DRY_RUN=true"   >> $GITHUB_ENV
+          else
+            echo "DEMO_MODE=false" >> $GITHUB_ENV
+            echo "DRY_RUN=false"  >> $GITHUB_ENV
+          fi
+          echo "mode=$MODE" >> $GITHUB_OUTPUT
+
+      - name: Run AlpacaBot
         env:
+          # Alpaca Secrets（demo 模式不需要，有設就用）
           ALPACA_KEY_A:    ${{ secrets.ALPACA_KEY_A }}
           ALPACA_SECRET_A: ${{ secrets.ALPACA_SECRET_A }}
-          ALPACA_URL_A:    ${{ secrets.ALPACA_URL_A }}
+          ALPACA_URL_A:    ${{ secrets.ALPACA_URL_A || 'https://paper-api.alpaca.markets' }}
           ALPACA_KEY_B:    ${{ secrets.ALPACA_KEY_B }}
           ALPACA_SECRET_B: ${{ secrets.ALPACA_SECRET_B }}
-          ALPACA_URL_B:    ${{ secrets.ALPACA_URL_B }}
+          ALPACA_URL_B:    ${{ secrets.ALPACA_URL_B || 'https://paper-api.alpaca.markets' }}
+          # Email（無設定時靜默略過）
           EMAIL_USER:      ${{ secrets.EMAIL_USER }}
           EMAIL_PASS:      ${{ secrets.EMAIL_PASS }}
-          DRY_RUN:         ${{ github.event.inputs.dry_run || 'false' }}
           ACCOUNT_FILTER:  ${{ github.event.inputs.account_filter || '' }}
         run: python main.py
 
@@ -57,20 +79,20 @@ jobs:
         run: |
           git config user.name  "AlpacaBot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/ accounts/
+          git add reports/
           git diff --staged --quiet || \
-            git commit -m "📊 Daily report $(date -u +%Y-%m-%d) [AlpacaBot]"
+            git commit -m "📊 [${{ steps.flags.outputs.mode }}] report $(date -u +%Y-%m-%d)"
           git push
 
-      - name: Upload logs as artifact
+      - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: alpacabot-log-${{ github.run_id }}
           path: '*.log'
-          retention-days: 30
+          retention-days: 14
 
-      - name: Notify on failure
+      - name: Create issue on failure
         if: failure()
         uses: actions/github-script@v7
         with:
@@ -78,7 +100,7 @@ jobs:
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `❌ AlpacaBot 執行失敗：${new Date().toISOString().slice(0,10)}`,
-              body: `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              title: `❌ AlpacaBot 失敗：${new Date().toISOString().slice(0,10)}`,
+              body: `Mode: ${{ steps.flags.outputs.mode }}\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
               labels: ['automation-failure']
             })
