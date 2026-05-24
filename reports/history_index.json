@@ -1,0 +1,11 @@
+{
+  "last_updated": "2026-05-24",
+  "reports": [
+    {
+      "date": "2026-05-24",
+      "account_id": "account_A",
+      "path": "reports/2026-05-24/model_account_A.json",
+      "nav": 102345.67
+    }
+  ]
+}
