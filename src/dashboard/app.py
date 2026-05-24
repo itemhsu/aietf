@@ -317,7 +317,7 @@ with col_r:
 
     num_cols = [c for c in ["今日%", "1週%", "1月%"] if c in b_df.columns]
     st.dataframe(
-        b_df.style.applymap(color_bench, subset=num_cols),
+        b_df.style.map(color_bench, subset=num_cols),
         use_container_width=True, hide_index=True,
     )
 
@@ -341,7 +341,7 @@ if wl:
                 )
                 cols_avail = [c for c in ["股票", "今日%"] if c in wl_df.columns]
                 st.dataframe(
-                    wl_df[cols_avail].style.applymap(color_num, subset=["今日%"] if "今日%" in cols_avail else []),
+                    wl_df[cols_avail].style.map(color_num, subset=["今日%"] if "今日%" in cols_avail else []),
                     use_container_width=True, hide_index=True,
                 )
 else:
