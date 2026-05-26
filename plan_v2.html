@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlpacaBot v2 — 全自動美股投資系統開發計劃（進階策略版）</title>
+<style>
+  :root {
+    --primary:#4f46e5;--primary-light:#eef2ff;
+    --success:#16a34a;--success-light:#f0fdf4;
+    --warning:#d97706;--warning-light:#fffbeb;
+    --danger:#dc2626;--danger-light:#fef2f2;
+    --gray:#6b7280;--gray-light:#f9fafb;
+    --border:#e5e7eb;--dark:#111827;--text:#374151;
+    --teal:#0891b2;--purple:#7c3aed;--rose:#e11d48;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#fff;color:var(--text);line-height:1.7;}
+
+  /* Header */
+  header{background:linear-gradient(135deg,#0c0a1e 0%,#1e1b4b 40%,#312e81 70%,#4f46e5 100%);color:#fff;padding:64px 40px 56px;position:relative;overflow:hidden;}
+  header::after{content:'';position:absolute;top:-40%;right:-10%;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.25) 0%,transparent 70%);}
+  .badge-header{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#c7d2fe;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:18px;}
+  header h1{font-size:2.8rem;font-weight:900;letter-spacing:-1.5px;margin-bottom:10px;line-height:1.1;}
+  header h1 span{color:#a5b4fc;}
+  header .sub{font-size:1.05rem;color:#c7d2fe;max-width:700px;margin-bottom:32px;}
+  .chips{display:flex;gap:10px;flex-wrap:wrap;}
+  .chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#e0e7ff;font-size:12px;font-weight:600;padding:5px 14px;border-radius:20px;}
+
+  /* Layout */
+  .container{max-width:1120px;margin:0 auto;padding:0 32px;}
+  section{padding:60px 0;border-bottom:1px solid var(--border);}
+  section:last-child{border-bottom:none;}
+  h2{font-size:1.55rem;font-weight:800;color:var(--dark);margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+  .subtitle{color:var(--gray);margin-bottom:36px;font-size:.97rem;}
+
+  /* Cards */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  .grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+  @media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+
+  .card{border:1px solid var(--border);border-radius:14px;padding:22px;background:#fff;}
+  .card-top{border-radius:14px 14px 0 0;padding:18px 22px;color:#fff;font-weight:700;font-size:.95rem;}
+  .card-body{border:1px solid var(--border);border-top:none;border-radius:0 0 14px 14px;padding:18px 22px;}
+
+  /* Stat cards */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:28px;}
+  .stat{border:1px solid var(--border);border-radius:12px;padding:18px;background:var(--gray-light);text-align:center;}
+  .stat .n{font-size:2.2rem;font-weight:900;color:var(--primary);}
+  .stat .l{font-size:12px;color:var(--gray);margin-top:4px;}
+
+  /* Phase */
+  .phase{border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:22px;}
+  .phase-hdr{display:flex;align-items:center;gap:16px;padding:18px 24px;background:var(--gray-light);border-bottom:1px solid var(--border);}
+  .pnum{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex-shrink:0;}
+  .p1{background:#4f46e5;}.p2{background:#0891b2;}.p3{background:#16a34a;}
+  .p4{background:#7c3aed;}.p5{background:#d97706;}.p6{background:#e11d48;}.p7{background:#374151;}.p8{background:#0f766e;}
+  .phase-hdr-txt h3{font-size:1rem;font-weight:700;}
+  .phase-hdr-txt p{font-size:12.5px;color:var(--gray);}
+  .badge-done{background:var(--success-light);color:var(--success);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;margin-left:auto;white-space:nowrap;}
+  .badge-new{background:#fdf4ff;color:#7c3aed;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;margin-left:auto;white-space:nowrap;}
+  .badge-plan{background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;margin-left:auto;white-space:nowrap;}
+  .phase-body{padding:22px 24px;}
+  .phase-cols{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media(max-width:640px){.phase-cols{grid-template-columns:1fr;}}
+  .col-title{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin-bottom:10px;}
+  .item-list{list-style:none;}
+  .item-list li{font-size:13px;padding:5px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;}
+  .item-list li:last-child{border-bottom:none;}
+  .item-list.deliver li::before{content:'📄';font-size:11px;margin-top:2px;}
+  .item-list.tests li::before{content:'✅';font-size:11px;margin-top:2px;flex-shrink:0;}
+
+  /* Code */
+  .code{background:#0f172a;color:#e2e8f0;border-radius:14px;padding:26px;font-family:'Courier New',monospace;font-size:12.5px;line-height:1.85;overflow-x:auto;margin:14px 0;}
+  .k{color:#93c5fd;}.s{color:#86efac;}.n{color:#fca5a5;}.b{color:#fdba74;}.c{color:#475569;font-style:italic;}
+
+  /* Timeline */
+  .tl{position:relative;padding-left:36px;}
+  .tl::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border);}
+  .tl-item{position:relative;margin-bottom:26px;}
+  .tl-dot{position:absolute;left:-30px;top:5px;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2.5px var(--primary);background:var(--primary);}
+  .tl-item.done .tl-dot{background:var(--success);box-shadow:0 0 0 2.5px var(--success);}
+  .tl-item.new .tl-dot{background:var(--purple);box-shadow:0 0 0 2.5px var(--purple);}
+  .tl-wk{font-size:11px;font-weight:700;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;}
+  .tl-ttl{font-weight:700;font-size:15px;color:var(--dark);}
+  .tl-desc{font-size:13px;color:var(--gray);}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{background:var(--gray-light);padding:11px 15px;text-align:left;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--border);}
+  td{padding:11px 15px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--gray-light);}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin:1px;}
+  .tag-b{background:var(--primary-light);color:var(--primary);}
+  .tag-g{background:var(--success-light);color:var(--success);}
+  .tag-o{background:var(--warning-light);color:var(--warning);}
+  .tag-p{background:#fdf4ff;color:#7c3aed;}
+  .tag-r{background:var(--danger-light);color:var(--danger);}
+
+  /* Flow */
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:20px;}
+  .flow-step{background:var(--primary-light);color:var(--primary);padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;}
+  .flow-step.g{background:var(--success-light);color:var(--success);}
+  .flow-step.o{background:var(--warning-light);color:var(--warning);}
+  .flow-step.p{background:#fdf4ff;color:#7c3aed;}
+  .flow-step.r{background:var(--danger-light);color:var(--danger);}
+  .flow-step.t{background:#ecfeff;color:var(--teal);}
+  .arrow{color:var(--gray);font-size:18px;}
+
+  /* Schema highlight boxes */
+  .schema-box{border-left:4px solid var(--primary);background:var(--primary-light);border-radius:0 10px 10px 0;padding:14px 18px;margin:12px 0;}
+  .schema-box.g{border-left-color:var(--success);background:var(--success-light);}
+  .schema-box.o{border-left-color:var(--warning);background:var(--warning-light);}
+  .schema-box.p{border-left-color:var(--purple);background:#fdf4ff;}
+  .schema-box.r{border-left-color:var(--danger);background:var(--danger-light);}
+  .schema-box h4{font-size:12px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
+  .schema-box p{font-size:13px;}
+
+  /* Dir tree */
+  .dir-tree{background:#0f172a;color:#94a3b8;border-radius:14px;padding:26px;font-family:'Courier New',monospace;font-size:13px;line-height:2.1;}
+  .dir-tree .dir{color:#93c5fd;font-weight:700;}
+  .dir-tree .file{color:#86efac;}
+  .dir-tree .cm{color:#475569;}
+  .dir-tree .new{color:#fde68a;}
+
+  /* Disclaimer */
+  .disclaimer{background:var(--warning-light);border:1px solid #fcd34d;border-radius:12px;padding:20px 24px;margin-top:28px;font-size:14px;color:#92400e;}
+
+  /* TOC */
+  .toc{background:var(--primary-light);border:1px solid #c7d2fe;border-radius:14px;padding:26px;margin-bottom:48px;}
+  .toc h3{color:var(--primary);font-size:12px;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;margin-bottom:14px;}
+  .toc ol{padding-left:22px;columns:2;gap:16px;}
+  @media(max-width:600px){.toc ol{columns:1;}}
+  .toc ol li{margin-bottom:7px;font-size:14px;}
+  .toc ol li a{color:var(--primary);text-decoration:none;font-weight:500;}
+  .toc ol li a:hover{text-decoration:underline;}
+
+  footer{background:var(--dark);color:#9ca3af;text-align:center;padding:32px;font-size:13px;}
+  footer a{color:#6366f1;text-decoration:none;}
+
+  .compare-table td:first-child{font-weight:600;color:var(--dark);}
+  .yes{color:var(--success);font-weight:700;}
+  .no{color:var(--gray);}
+  .new-feat{color:var(--purple);font-weight:700;}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="container">
+    <div class="badge-header">Software Development Plan · v2.0 · Schema-Driven Strategy</div>
+    <h1>🤖 AlpacaBot<br><span>全自動美股投資系統 — 進階策略版</span></h1>
+    <p class="sub">整合 TopRank MA Momentum 策略 Schema v2：技術指標篩選 × 加權百分位排名 × ATR 動態停損 × 每週再平衡。所有程序在 GitHub Actions 雲端執行，零本機依賴。</p>
+    <div class="chips">
+      <span class="chip">📅 8 個開發階段</span>
+      <span class="chip">🧪 100+ 測試案例</span>
+      <span class="chip">📊 13 種技術指標</span>
+      <span class="chip">⚖️ 加權百分位排名</span>
+      <span class="chip">🛡️ ATR 動態停損</span>
+      <span class="chip">🔄 每週一再平衡</span>
+      <span class="chip">☁️ 100% 雲端執行</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- TOC -->
+  <section>
+    <div class="toc">
+      <h3>📋 目錄</h3>
+      <ol>
+        <li><a href="#compare">v1 → v2 升級對照</a></li>
+        <li><a href="#schema">策略 JSON Schema v2 解說</a></li>
+        <li><a href="#flow">每日執行流程</a></li>
+        <li><a href="#architecture">系統架構模組</a></li>
+        <li><a href="#phases">八大開發階段</a></li>
+        <li><a href="#timeline">時程規劃</a></li>
+        <li><a href="#stack">技術堆疊</a></li>
+        <li><a href="#directory">目錄結構</a></li>
+        <li><a href="#envvars">環境變數</a></li>
+        <li><a href="#disclaimer">免責聲明</a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── 0. STATS ── -->
+  <section>
+    <h2>🎯 專案核心指標</h2>
+    <p class="subtitle">從簡單市值策略升級為多因子加權動量策略</p>
+    <div class="stat-grid">
+      <div class="stat"><div class="n">8</div><div class="l">開發階段</div></div>
+      <div class="stat"><div class="n">100+</div><div class="l">自動化測試</div></div>
+      <div class="stat"><div class="n">13</div><div class="l">技術指標</div></div>
+      <div class="stat"><div class="n">11</div><div class="l">排名因子</div></div>
+      <div class="stat"><div class="n">8</div><div class="l">最大持倉數</div></div>
+      <div class="stat"><div class="n">10%</div><div class="l">每週一再平衡</div></div>
+      <div class="stat"><div class="n">2×ATR</div><div class="l">動態停損</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">本機依賴</div></div>
+    </div>
+  </section>
+
+  <!-- ── 1. COMPARE ── -->
+  <section id="compare">
+    <h2>📊 v1 → v2 升級對照</h2>
+    <p class="subtitle">在原有基礎上增加進階策略能力，現有功能全部保留</p>
+    <table>
+      <thead><tr><th>功能</th><th>v1 現有</th><th>v2 新增／強化</th></tr></thead>
+      <tbody>
+        <tr><td>選股方法</td><td><span class="yes">✓ 市值排序</span></td><td><span class="new-feat">★ 基本面過濾 + 技術面過濾 + 加權百分位排名</span></td></tr>
+        <tr><td>技術指標</td><td><span class="no">— 無</span></td><td><span class="new-feat">★ SMA/EMA/RSI/MACD/ADX/ATR/BB/OBV/VWAP（13 種）</span></td></tr>
+        <tr><td>進場訊號</td><td><span class="no">— 無</span></td><td><span class="new-feat">★ 均線黃金交叉 + MACD + 成交量確認</span></td></tr>
+        <tr><td>出場訊號</td><td><span class="no">— 無</span></td><td><span class="new-feat">★ ATR停損 + 追蹤停損 + 止盈 + 排名退出</span></td></tr>
+        <tr><td>基本面篩選</td><td><span class="no">— 無</span></td><td><span class="new-feat">★ 營收成長 / EPS / ROE / 負債比篩選</span></td></tr>
+        <tr><td>再平衡頻率</td><td><span class="yes">✓ 每月初 + 新資金</span></td><td><span class="new-feat">★ 每週一 09:45 + 排名低於閾值換股</span></td></tr>
+        <tr><td>風險控管</td><td><span class="no">— 無</span></td><td><span class="new-feat">★ 最大日損 3% / 最大回撤 15% / Beta 上限</span></td></tr>
+        <tr><td>持倉數量</td><td><span class="yes">✓ Top 10</span></td><td><span class="new-feat">★ Top 8（可設定）+ 產業集中限制 30%</span></td></tr>
+        <tr><td>股票宇宙</td><td><span class="yes">✓ 固定清單 25 檔</span></td><td><span class="new-feat">★ 動態篩選 NASDAQ+NYSE（最多 2000 候選）</span></td></tr>
+        <tr><td>整數股</td><td><span class="yes">✓ math.floor()</span></td><td><span class="yes">✓ 保留（覆蓋 schema allow_fractional_shares）</span></td></tr>
+        <tr><td>多帳戶</td><td><span class="yes">✓</span></td><td><span class="yes">✓ 保留</span></td></tr>
+        <tr><td>日報 JSON</td><td><span class="yes">✓</span></td><td><span class="new-feat">★ 新增排名表 / 交易日誌 / 帳戶快照欄位</span></td></tr>
+        <tr><td>Dashboard</td><td><span class="yes">✓ Streamlit</span></td><td><span class="new-feat">★ 新增排名雷達圖 / RSI 熱力圖 / 停損線</span></td></tr>
+        <tr><td>回測設定</td><td><span class="no">— 無</span></td><td><span class="new-feat">★ Schema 內建（CAGR/Sharpe/Sortino/最大回撤…）</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ── 2. SCHEMA ── -->
+  <section id="schema">
+    <h2>📋 策略 JSON Schema v2 解說</h2>
+    <p class="subtitle">每個欄位群組的作用，讓您不需要看懂代碼也能調整策略</p>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div>
+        <div class="schema-box">
+          <h4>🌐 universe — 選股宇宙</h4>
+          <p>從哪些交易所、最低股價、最低市值（20億）、最低日均成交量（100萬股）、排除哪些產業（金融/公用事業）開始篩選。</p>
+        </div>
+        <div class="schema-box g">
+          <h4>📐 filters — 基本面 + 技術面過濾</h4>
+          <p><b>基本面</b>：營收年增率 &gt;10%、EPS為正、ROE &gt;10%、負債股本比 &lt;1.5。<b>技術面</b>：收盤 &gt; SMA50 &gt; SMA200（多頭排列）、RSI 45~70、ADX &gt;20（趨勢確立）。</p>
+        </div>
+        <div class="schema-box o">
+          <h4>⚖️ ranking — 加權百分位排名</h4>
+          <p>11 個因子加權打分，最高分前 8 名進入持倉。因子包含 90 天動量(18%)、MA 斜率(10%)、MACD(8%)、ROE(8%)等。</p>
+        </div>
+      </div>
+      <div>
+        <div class="schema-box p">
+          <h4>📈 entry_signals — 進場訊號（AND）</h4>
+          <p>排名前 8 + SMA20 上穿 SMA50（3日內）+ MACD Histogram &gt;0 + 成交量比 &gt;1.2 + RSI &lt;70，全部符合才買進。</p>
+        </div>
+        <div class="schema-box r">
+          <h4>🛡️ exit_signals — 出場訊號（OR，任一觸發賣出）</h4>
+          <p>① 排名跌出前30 ② SMA20 跌穿 SMA50 ③ ATR×2 停損 ④ 從高點回落10%追蹤停損 ⑤ 獲利25%止盈 ⑥ 跌破 SMA200。</p>
+        </div>
+        <div class="schema-box">
+          <h4>⚙️ rebalance — 每週再平衡</h4>
+          <p>每週一 09:45（開盤後15分鐘）執行。排名低於30名換股。單次換股上限50%，避免過度交易。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="code">
+<span class="c">// strategies/toprank_ma_momentum_v2.json（精簡展示核心欄位）</span>
+{
+  <span class="k">"$schema"</span>: <span class="s">"https://example.com/trading-strategy.schema.json"</span>,
+  <span class="k">"schema_version"</span>: <span class="s">"2.0.0"</span>,
+  <span class="k">"strategy"</span>: {
+    <span class="k">"id"</span>: <span class="s">"toprank_ma_momentum_v2"</span>,
+    <span class="k">"name"</span>: <span class="s">"TopRank MA Momentum Strategy"</span>,
+    <span class="k">"enabled"</span>: <span class="b">true</span>
+  },
+  <span class="k">"universe"</span>: {
+    <span class="k">"exchanges"</span>: [<span class="s">"NASDAQ"</span>, <span class="s">"NYSE"</span>],
+    <span class="k">"min_price"</span>: <span class="n">5</span>, <span class="k">"min_market_cap"</span>: <span class="n">2000000000</span>,
+    <span class="k">"min_avg_volume_20d"</span>: <span class="n">1000000</span>,
+    <span class="k">"exclude_sectors"</span>: [<span class="s">"Financials"</span>, <span class="s">"Utilities"</span>]
+  },
+  <span class="k">"indicators"</span>: [
+    { <span class="k">"name"</span>: <span class="s">"sma_20"</span>,  <span class="k">"type"</span>: <span class="s">"SMA"</span>,  <span class="k">"period"</span>: <span class="n">20</span> },
+    { <span class="k">"name"</span>: <span class="s">"sma_50"</span>,  <span class="k">"type"</span>: <span class="s">"SMA"</span>,  <span class="k">"period"</span>: <span class="n">50</span> },
+    { <span class="k">"name"</span>: <span class="s">"sma_200"</span>, <span class="k">"type"</span>: <span class="s">"SMA"</span>,  <span class="k">"period"</span>: <span class="n">200</span> },
+    { <span class="k">"name"</span>: <span class="s">"rsi_14"</span>,  <span class="k">"type"</span>: <span class="s">"RSI"</span>,  <span class="k">"period"</span>: <span class="n">14</span> },
+    { <span class="k">"name"</span>: <span class="s">"macd"</span>,    <span class="k">"type"</span>: <span class="s">"MACD"</span>, <span class="k">"fast"</span>: <span class="n">12</span>, <span class="k">"slow"</span>: <span class="n">26</span>, <span class="k">"signal"</span>: <span class="n">9</span> },
+    { <span class="k">"name"</span>: <span class="s">"adx_14"</span>,  <span class="k">"type"</span>: <span class="s">"ADX"</span>,  <span class="k">"period"</span>: <span class="n">14</span> },
+    { <span class="k">"name"</span>: <span class="s">"atr_14"</span>,  <span class="k">"type"</span>: <span class="s">"ATR"</span>,  <span class="k">"period"</span>: <span class="n">14</span> }
+    <span class="c">// ... 完整見 strategies/toprank_ma_momentum_v2.json</span>
+  ],
+  <span class="k">"filters"</span>: {
+    <span class="k">"fundamental"</span>: { <span class="k">"logic"</span>: <span class="s">"AND"</span>, <span class="k">"conditions"</span>: [
+      { <span class="k">"field"</span>: <span class="s">"revenue_growth_yoy"</span>, <span class="k">"op"</span>: <span class="s">">"</span>, <span class="k">"value"</span>: <span class="n">0.1</span> },
+      { <span class="k">"field"</span>: <span class="s">"eps_ttm"</span>,           <span class="k">"op"</span>: <span class="s">">"</span>, <span class="k">"value"</span>: <span class="n">0</span>   },
+      { <span class="k">"field"</span>: <span class="s">"roe"</span>,               <span class="k">"op"</span>: <span class="s">">"</span>, <span class="k">"value"</span>: <span class="n">0.1</span> },
+      { <span class="k">"field"</span>: <span class="s">"debt_to_equity"</span>,    <span class="k">"op"</span>: <span class="s">"<"</span>, <span class="k">"value"</span>: <span class="n">1.5</span> }
+    ]},
+    <span class="k">"technical"</span>: { <span class="k">"logic"</span>: <span class="s">"AND"</span>, <span class="k">"conditions"</span>: [
+      { <span class="k">"field"</span>: <span class="s">"adjusted_close"</span>, <span class="k">"op"</span>: <span class="s">">"</span>, <span class="k">"value"</span>: <span class="s">"sma_50"</span>  },
+      { <span class="k">"field"</span>: <span class="s">"sma_50"</span>,         <span class="k">"op"</span>: <span class="s">">"</span>, <span class="k">"value"</span>: <span class="s">"sma_200"</span> },
+      { <span class="k">"field"</span>: <span class="s">"rsi_14"</span>,         <span class="k">"op"</span>: <span class="s">"between"</span>, <span class="k">"value"</span>: [<span class="n">45</span>, <span class="n">70</span>] },
+      { <span class="k">"field"</span>: <span class="s">"adx_14"</span>,         <span class="k">"op"</span>: <span class="s">">"</span>, <span class="k">"value"</span>: <span class="n">20</span>       }
+    ]}
+  },
+  <span class="k">"ranking"</span>: {
+    <span class="k">"method"</span>: <span class="s">"weighted_percentile_score"</span>,
+    <span class="k">"factors"</span>: [
+      { <span class="k">"field"</span>: <span class="s">"momentum_90d"</span>,       <span class="k">"weight"</span>: <span class="n">0.18</span>, <span class="k">"direction"</span>: <span class="s">"desc"</span> },
+      { <span class="k">"field"</span>: <span class="s">"ma_gap_50"</span>,          <span class="k">"weight"</span>: <span class="n">0.12</span>, <span class="k">"direction"</span>: <span class="s">"desc"</span> },
+      { <span class="k">"field"</span>: <span class="s">"ma_slope_20_5d"</span>,     <span class="k">"weight"</span>: <span class="n">0.10</span>, <span class="k">"direction"</span>: <span class="s">"desc"</span> },
+      { <span class="k">"field"</span>: <span class="s">"roe"</span>,               <span class="k">"weight"</span>: <span class="n">0.08</span>, <span class="k">"direction"</span>: <span class="s">"desc"</span> },
+      { <span class="k">"field"</span>: <span class="s">"pe_ratio"</span>,          <span class="k">"weight"</span>: <span class="n">0.05</span>, <span class="k">"direction"</span>: <span class="s">"asc"</span>  }
+      <span class="c">// 共 11 個因子，總權重 = 1.0</span>
+    ],
+    <span class="k">"selection"</span>: { <span class="k">"watchlist_top_n"</span>: <span class="n">20</span>, <span class="k">"buy_top_n"</span>: <span class="n">8</span>, <span class="k">"min_score"</span>: <span class="n">70</span> }
+  },
+  <span class="k">"exit_signals"</span>: {
+    <span class="k">"logic"</span>: <span class="s">"OR"</span>, <span class="k">"conditions"</span>: [
+      { <span class="k">"type"</span>: <span class="s">"stop_loss"</span>,     <span class="k">"mode"</span>: <span class="s">"atr_multiple"</span>, <span class="k">"multiple"</span>: <span class="n">2.0</span> },
+      { <span class="k">"type"</span>: <span class="s">"trailing_stop"</span>, <span class="k">"pct"</span>: <span class="n">0.10</span> },
+      { <span class="k">"type"</span>: <span class="s">"take_profit"</span>,   <span class="k">"pct"</span>: <span class="n">0.25</span> }
+    ]
+  },
+  <span class="k">"risk_management"</span>: {
+    <span class="k">"max_daily_loss_pct"</span>: <span class="n">0.03</span>,
+    <span class="k">"max_portfolio_drawdown_pct"</span>: <span class="n">0.15</span>,
+    <span class="k">"halt_new_entries_when_drawdown_pct_exceeds"</span>: <span class="n">0.10</span>
+  },
+  <span class="k">"portfolio"</span>: {
+    <span class="k">"position_sizing"</span>: <span class="s">"equal_weight"</span>,
+    <span class="k">"max_positions"</span>: <span class="n">8</span>,
+    <span class="k">"target_position_pct"</span>: <span class="n">0.1125</span>,
+    <span class="k">"allow_fractional_shares"</span>: <span class="b">false</span>   <span class="c">// 覆蓋：本系統只買整數股</span>
+  },
+  <span class="k">"rebalance"</span>: {
+    <span class="k">"frequency"</span>: <span class="s">"weekly"</span>, <span class="k">"day_of_week"</span>: <span class="s">"MON"</span>,
+    <span class="k">"time"</span>: <span class="s">"09:45:00"</span>, <span class="k">"timezone"</span>: <span class="s">"America/New_York"</span>,
+    <span class="k">"replace_if_rank_below"</span>: <span class="n">30</span>,
+    <span class="k">"max_turnover_pct_per_rebalance"</span>: <span class="n">0.5</span>
+  },
+  <span class="k">"execution"</span>: {
+    <span class="k">"broker"</span>: <span class="s">"alpaca"</span>, <span class="k">"order_type"</span>: <span class="s">"market"</span>,
+    <span class="k">"submit_after_market_open_minutes"</span>: <span class="n">15</span>,
+    <span class="k">"do_not_trade_before_earnings_days"</span>: <span class="n">2</span>
+  }
+}
+    </div>
+  </section>
+
+  <!-- ── 3. FLOW ── -->
+  <section id="flow">
+    <h2>🔄 每日執行流程（v2）</h2>
+    <p class="subtitle">週一執行完整再平衡，週二～五執行停損/止盈檢查</p>
+
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">週一（完整再平衡日）</h3>
+    <div class="flow">
+      <div class="flow-step">① Actions 觸發</div><span class="arrow">→</span>
+      <div class="flow-step g">② 取帳戶狀態</div><span class="arrow">→</span>
+      <div class="flow-step o">③ 抓宇宙資料<br><small>2000 候選股</small></div><span class="arrow">→</span>
+      <div class="flow-step o">④ 基本面過濾</div><span class="arrow">→</span>
+      <div class="flow-step o">⑤ 技術面過濾</div><span class="arrow">→</span>
+      <div class="flow-step p">⑥ 計算 13 指標</div><span class="arrow">→</span>
+      <div class="flow-step p">⑦ 加權百分位排名</div><span class="arrow">→</span>
+      <div class="flow-step" style="background:var(--danger-light);color:var(--danger)">⑧ 出場訊號檢查</div><span class="arrow">→</span>
+      <div class="flow-step g">⑨ 進場訊號確認</div><span class="arrow">→</span>
+      <div class="flow-step" style="background:var(--danger-light);color:var(--danger)">⑩ 執行買賣（整數股）</div><span class="arrow">→</span>
+      <div class="flow-step t">⑪ 生成日報 JSON</div><span class="arrow">→</span>
+      <div class="flow-step">⑫ Email + GitHub push</div>
+    </div>
+
+    <h3 style="font-size:.9rem;font-weight:700;color:var(--gray);letter-spacing:.5px;text-transform:uppercase;margin:20px 0 8px;">週二～週五（停損監控日）</h3>
+    <div class="flow">
+      <div class="flow-step">① Actions 觸發</div><span class="arrow">→</span>
+      <div class="flow-step g">② 取帳戶狀態</div><span class="arrow">→</span>
+      <div class="flow-step" style="background:var(--danger-light);color:var(--danger)">③ ATR 停損 / 追蹤停損 / 止盈檢查</div><span class="arrow">→</span>
+      <div class="flow-step" style="background:var(--danger-light);color:var(--danger)">④ 需出場則賣出</div><span class="arrow">→</span>
+      <div class="flow-step t">⑤ 生成日報 JSON</div><span class="arrow">→</span>
+      <div class="flow-step">⑥ Email 通知</div>
+    </div>
+  </section>
+
+  <!-- ── 4. ARCHITECTURE ── -->
+  <section id="architecture">
+    <h2>🏗 系統架構模組（v2）</h2>
+    <p class="subtitle">新增指標計算層與風控層，原有模組全部保留</p>
+
+    <div class="grid-auto">
+      <div class="card">
+        <div class="card-top" style="background:#4f46e5;">🔌 src/data/ — 資料層</div>
+        <div class="card-body">
+          <ul class="item-list deliver">
+            <li>alpaca_client.py — REST API + 重試</li>
+            <li>market_data.py — 即時報價 / OHLCV</li>
+            <li>fundamental.py <span class="tag tag-p">NEW</span> — yfinance 基本面資料</li>
+            <li>indicators.py <span class="tag tag-p">NEW</span> — 13 種技術指標計算</li>
+            <li>benchmark.py — QQQ/SPY 歷史</li>
+            <li>demo_data.py — DEMO_MODE 假資料</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top" style="background:#16a34a;">⚙️ src/engine/ — 核心引擎</div>
+        <div class="card-body">
+          <ul class="item-list deliver">
+            <li>strategy_loader.py — 動態載入 JSON</li>
+            <li>account_manager.py — 多帳戶管理</li>
+            <li>universe_filter.py <span class="tag tag-p">NEW</span> — 宇宙過濾</li>
+            <li>ranker.py <span class="tag tag-p">NEW</span> — 加權百分位排名</li>
+            <li>signal_engine.py <span class="tag tag-p">NEW</span> — 進出場訊號</li>
+            <li>risk_manager.py <span class="tag tag-p">NEW</span> — 日損/回撤熔斷</li>
+            <li>rebalancer.py — 再平衡計算（整數股）</li>
+            <li>trader.py — 下單 + DRY_RUN</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top" style="background:#d97706;">📊 src/report/ — 報告層</div>
+        <div class="card-body">
+          <ul class="item-list deliver">
+            <li>model.py — 資料 → JSON（含排名表/停損價）</li>
+            <li>view_email.py — Jinja2 HTML 渲染</li>
+            <li>reports/YYYY-MM-DD/ 歷史儲存</li>
+            <li>新增 rank_table / stop_prices 欄位</li>
+            <li>NAV + QQQ/SPY 比較折線圖資料</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top" style="background:#7c3aed;">📈 src/dashboard/ — 儀錶板</div>
+        <div class="card-body">
+          <ul class="item-list deliver">
+            <li>data.py — 純 JSON 讀取</li>
+            <li>app.py — Streamlit UI（零 API）</li>
+            <li>RSI 熱力圖 <span class="tag tag-p">NEW</span></li>
+            <li>排名因子雷達圖 <span class="tag tag-p">NEW</span></li>
+            <li>停損線標記 <span class="tag tag-p">NEW</span></li>
+            <li>NAV + QQQ/SPY 勾選比對</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top" style="background:#e11d48;">🔔 src/notify/ — 通知層</div>
+        <div class="card-body">
+          <ul class="item-list deliver">
+            <li>email_sender.py — Gmail SMTP</li>
+            <li>trade_alert.py — 即時交易警報</li>
+            <li>stop_alert.py <span class="tag tag-p">NEW</span> — 停損觸發即時通知</li>
+            <li>risk_alert.py <span class="tag tag-p">NEW</span> — 回撤超限警報</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-top" style="background:#374151;">☁️ GitHub Actions — CI/CD</div>
+        <div class="card-body">
+          <ul class="item-list deliver">
+            <li>daily_rebalance.yml — 週一完整再平衡</li>
+            <li>daily_monitor.yml <span class="tag tag-p">NEW</span> — 週二～五停損監控</li>
+            <li>三模式：demo / dry_run / live</li>
+            <li>失敗自動開 GitHub Issue</li>
+            <li>報告 JSON 自動 commit</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5. PHASES ── -->
+  <section id="phases">
+    <h2>🚀 八大開發階段</h2>
+    <p class="subtitle">Phase 1-7 已完成，Phase 8 為 v2 新增進階策略能力</p>
+
+    <!-- Phase 1 -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p1">1</div>
+        <div class="phase-hdr-txt"><h3>Alpaca 基礎連線 ＋ 多帳戶管理</h3><p>API 客戶端、帳戶載入、策略 JSON 動態載入</p></div>
+        <span class="badge-done">✅ 已完成</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>src/data/alpaca_client.py（指數退避重試、AuthenticationError）</li>
+            <li>src/engine/account_manager.py（load_accounts）</li>
+            <li>src/engine/strategy_loader.py（動態讀取 JSON Schema v2）</li>
+            <li>accounts/accounts_index.json</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase1.py）</div><ul class="item-list tests">
+            <li>API Key 缺失時拋出 AuthenticationError</li>
+            <li>多帳戶各自對應正確策略</li>
+            <li>account_filter 篩選單一帳戶</li>
+            <li>disabled 帳戶不被載入</li>
+            <li>strategy JSON schema_version 欄位驗證</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p2">2</div>
+        <div class="phase-hdr-txt"><h3>市場資料 ＋ 基本面資料 ＋ 選股宇宙過濾</h3><p>OHLCV、基本面篩選、宇宙過濾（新增 universe_filter）</p></div>
+        <span class="badge-done">✅ 已完成（基礎）/ 待擴充</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>src/data/market_data.py — OHLCV 歷史資料</li>
+            <li>src/data/fundamental.py — 營收成長/EPS/ROE/D/E（yfinance）</li>
+            <li>src/engine/universe_filter.py — 宇宙過濾（價格/市值/成交量/產業）</li>
+            <li>src/data/benchmark.py — QQQ/SPY</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase2.py）</div><ul class="item-list tests">
+            <li>universe_filter 排除股價 &lt;5 的股票</li>
+            <li>universe_filter 排除金融/公用事業產業</li>
+            <li>fundamental_filter 過濾 ROE &lt;10% 的股票</li>
+            <li>technical_filter 過濾 ADX &lt;20 的股票</li>
+            <li>P/E 回傳數字或 "N/A"（不崩潰）</li>
+            <li>過濾後候選股 ≤ max_candidates</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p3">3</div>
+        <div class="phase-hdr-txt"><h3>技術指標計算（13 種）</h3><p>SMA/EMA/RSI/MACD/ADX/ATR/BB/OBV/VWAP + 衍生因子</p></div>
+        <span class="badge-new">🆕 v2 新增</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>src/data/indicators.py — 13 種指標統一計算入口</li>
+            <li>指標：SMA(20/50/100/200)、EMA(20)、RSI(14)</li>
+            <li>指標：MACD(12,26,9)、ADX(14)、ATR(14)</li>
+            <li>指標：Bollinger Bands(20)、OBV、VWAP</li>
+            <li>衍生因子：ma_gap、ma_slope、momentum_20/60/90d、volume_ratio、bb_position</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase3_indicators.py）</div><ul class="item-list tests">
+            <li>SMA 計算結果與 pandas rolling mean 一致</li>
+            <li>RSI 值域在 [0, 100]</li>
+            <li>MACD Histogram = macd_line - signal_line</li>
+            <li>ATR 永遠為正值</li>
+            <li>bb_position = (close - lower) / (upper - lower)</li>
+            <li>momentum_90d = (close - close_90d_ago) / close_90d_ago</li>
+            <li>lag() 函式邊界值測試（資料不足時回傳 NaN）</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 (was 3) -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p4">4</div>
+        <div class="phase-hdr-txt"><h3>加權百分位排名引擎</h3><p>跨截面百分位標準化、11 因子加權、最低分過濾</p></div>
+        <span class="badge-new">🆕 v2 新增</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>src/engine/ranker.py — RankEngine 類別</li>
+            <li>跨截面百分位標準化（clip 2%~98%）</li>
+            <li>缺失資料排除（exclude_symbol）</li>
+            <li>加權分數計算（總分 0~100）</li>
+            <li>watchlist_top_n=20 / buy_top_n=8 雙層篩選</li>
+            <li>同分時以 tie_breakers 決定順序</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase4_ranker.py）</div><ul class="item-list tests">
+            <li>weights 總和 = 1.0（JSON 驗證）</li>
+            <li>百分位結果在 [0, 1] 之間</li>
+            <li>最終選股數量 = buy_top_n</li>
+            <li>min_score 過濾：分數 &lt;70 的股票被排除</li>
+            <li>tie_breaker：同分時 momentum_90d 高者優先</li>
+            <li>缺少任一因子資料的股票被整個排除</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 5 (was 4) -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p5">5</div>
+        <div class="phase-hdr-txt"><h3>進出場訊號引擎 ＋ 風險控管</h3><p>均線交叉、ATR停損、追蹤停損、止盈、日損熔斷</p></div>
+        <span class="badge-new">🆕 v2 新增</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>src/engine/signal_engine.py — 進出場訊號評估</li>
+            <li>src/engine/risk_manager.py — 日損/回撤熔斷</li>
+            <li>進場：AND（排名前8 + 均線黃金交叉 + MACD + 成交量）</li>
+            <li>出場：OR（排名退出/死叉/ATR停損/追蹤停損/止盈）</li>
+            <li>停損價格存入報告 JSON（stop_prices 欄位）</li>
+            <li>盈利後 cooldown_days 防止停損後立即再買</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase5_signal.py）</div><ul class="item-list tests">
+            <li>均線黃金交叉：3日內有一天 sma20 &gt; sma50（之前未穿越）</li>
+            <li>ATR停損：買入價 - 2×atr_14 = 停損價</li>
+            <li>追蹤停損：從最高價回落10%觸發</li>
+            <li>止盈：獲利25%觸發賣出</li>
+            <li>日損3%觸發熔斷，當日不再下買單</li>
+            <li>回撤15%觸發：停止所有新進場</li>
+            <li>cooldown：停損後5天不再買同一股票</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 6 (was 5+6 merged) -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p6">6</div>
+        <div class="phase-hdr-txt"><h3>再平衡引擎 ＋ 下單執行（升級版）</h3><p>週一完整再平衡、週二～五停損監控、整數股、DRY_RUN</p></div>
+        <span class="badge-done">✅ 基礎已完成 / 待升級</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>src/engine/rebalancer.py — 週一完整再平衡邏輯</li>
+            <li>src/engine/trader.py — 停損/追蹤停損每日執行</li>
+            <li>每次換股上限 50% NAV（max_turnover_pct）</li>
+            <li>開盤後15分鐘下單（submit_after_market_open_minutes）</li>
+            <li>財報前2天、後1天不下新買單</li>
+            <li>兩支 workflow：weekly_rebalance.yml + daily_monitor.yml</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase6_rebalance.py）</div><ul class="item-list tests">
+            <li>週一才執行完整換股，週二～五只執行停損</li>
+            <li>換股量不超過 max_turnover_pct = 50%</li>
+            <li>整數股：所有買入量 = math.floor()</li>
+            <li>賣出優先於買入</li>
+            <li>財報黑名單期間不下買單</li>
+            <li>DRY_RUN=true 時不呼叫 submit_order</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 7 -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p7">7</div>
+        <div class="phase-hdr-txt"><h3>日報升級 ＋ Dashboard v2 ＋ Email 通知</h3><p>排名表、停損線、RSI熱力圖、風控警報 Email</p></div>
+        <span class="badge-done">✅ 基礎已完成 / 待升級</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>report model.py — 新增 rank_table / stop_prices / risk_status</li>
+            <li>Dashboard — RSI 熱力圖（各股 RSI 顏色格）</li>
+            <li>Dashboard — 排名因子雷達圖</li>
+            <li>Dashboard — NAV 折線 + QQQ/SPY + 停損觸發標記</li>
+            <li>Email — 加入排名前20 / 停損觸發提醒 / 風控狀態</li>
+            <li>src/notify/stop_alert.py + risk_alert.py</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase7_report.py）</div><ul class="item-list tests">
+            <li>報告 JSON 含 rank_table（長度 = watchlist_top_n）</li>
+            <li>報告 JSON 含 stop_prices（每個持倉一個停損價）</li>
+            <li>Dashboard app.py 不含直接 API 呼叫</li>
+            <li>停損觸發時 stop_alert 正確帶入股票代碼與觸發價格</li>
+            <li>回撤超 10% 時 risk_alert 被觸發</li>
+            <li>Email HTML 含所有三大觀察分類標題</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 8 -->
+    <div class="phase">
+      <div class="phase-hdr">
+        <div class="pnum p8">8</div>
+        <div class="phase-hdr-txt"><h3>全整合測試 ＋ DEMO_MODE v2 ＋ 回測框架</h3><p>端對端驗證、v2 假資料更新、歷史回測報告生成</p></div>
+        <span class="badge-new">🆕 v2 新增</span>
+      </div>
+      <div class="phase-body">
+        <div class="phase-cols">
+          <div><div class="col-title">交付物</div><ul class="item-list deliver">
+            <li>src/data/demo_data_v2.py — 含技術指標假資料</li>
+            <li>src/backtest/runner.py — 簡易回測執行器</li>
+            <li>回測指標：CAGR/Sharpe/Sortino/最大回撤/Calmar/Win Rate</li>
+            <li>CLAUDE.md 更新（v2 架構記憶）</li>
+            <li>所有 workflow 驗證：weekly + daily + manual</li>
+          </ul></div>
+          <div><div class="col-title">測試案例（test_phase8_integration.py）</div><ul class="item-list tests">
+            <li>DEMO_MODE v2 完整走通（含排名、進出場、停損）</li>
+            <li>dry_run 模式：API 呼叫但不下單</li>
+            <li>週一 workflow 完整執行，週三 workflow 只做停損檢查</li>
+            <li>回測 Sharpe &gt; 0（若使用假資料趨勢向上）</li>
+            <li>CLAUDE.md 包含 v2 架構說明</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. TIMELINE ── -->
+  <section id="timeline">
+    <h2>📅 時程規劃</h2>
+    <p class="subtitle">Phase 1-7 已完成；Phase 8 為 v2 新增工作</p>
+    <div class="tl">
+      <div class="tl-item done"><div class="tl-dot"></div><div class="tl-wk">Week 1</div><div class="tl-ttl">Phase 1 — 基礎建設（已完成）</div><div class="tl-desc">Alpaca Client、多帳戶、策略 JSON 動態載入</div></div>
+      <div class="tl-item done"><div class="tl-dot"></div><div class="tl-wk">Week 2</div><div class="tl-ttl">Phase 2 — 市場資料（已完成）</div><div class="tl-desc">即時報價、市值計算、P/E、QQQ/SPY 歷史</div></div>
+      <div class="tl-item done"><div class="tl-dot"></div><div class="tl-wk">Week 3</div><div class="tl-ttl">Phase 3/4/5 — 再平衡引擎、日報、Dashboard（已完成）</div><div class="tl-desc">整數股、容忍帶、Model/View分離、Streamlit Cloud</div></div>
+      <div class="tl-item done"><div class="tl-dot"></div><div class="tl-wk">Week 4-7</div><div class="tl-ttl">Phase 6/7 — Email 通知 + GitHub Actions 整合（已完成）</div><div class="tl-desc">DEMO_MODE、三模式切換、端對端驗證通過</div></div>
+      <div class="tl-item new"><div class="tl-dot"></div><div class="tl-wk">Week 8 🆕</div><div class="tl-ttl">Phase 3（v2）— 技術指標計算層</div><div class="tl-desc">indicators.py：SMA/EMA/RSI/MACD/ADX/ATR/BB/OBV/VWAP + 衍生因子</div></div>
+      <div class="tl-item new"><div class="tl-dot"></div><div class="tl-wk">Week 9 🆕</div><div class="tl-ttl">Phase 4（v2）— 加權百分位排名引擎</div><div class="tl-desc">ranker.py：11 因子 × 加權百分位 × min_score 過濾</div></div>
+      <div class="tl-item new"><div class="tl-dot"></div><div class="tl-wk">Week 10 🆕</div><div class="tl-ttl">Phase 5（v2）— 進出場訊號 + 風控</div><div class="tl-desc">signal_engine.py + risk_manager.py：ATR停損、追蹤停損、熔斷</div></div>
+      <div class="tl-item new"><div class="tl-dot"></div><div class="tl-wk">Week 11-12 🆕</div><div class="tl-ttl">Phase 6/7/8（v2）— 整合、報告升級、回測</div><div class="tl-desc">週一/週二～五雙 workflow、Dashboard v2、回測框架</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-wk">每週一</div><div class="tl-ttl">⏰ 每週一 台灣時間 21:45 完整再平衡</div><div class="tl-desc">（美東 09:45，開盤後 15 分鐘）</div></div>
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-wk">週二～五</div><div class="tl-ttl">⏰ 每日 台灣時間 22:30 停損監控</div><div class="tl-desc">ATR 停損 / 追蹤停損 / 止盈 每日檢查</div></div>
+    </div>
+  </section>
+
+  <!-- ── 7. STACK ── -->
+  <section id="stack">
+    <h2>🔧 技術堆疊</h2>
+    <p class="subtitle">新增技術指標計算與回測相關套件</p>
+    <table>
+      <thead><tr><th>分類</th><th>技術 / 套件</th><th>用途</th><th>版本</th></tr></thead>
+      <tbody>
+        <tr><td>核心語言</td><td><strong>Python 3.11</strong></td><td>所有後端邏輯</td><td><span class="tag tag-g">3.11+</span></td></tr>
+        <tr><td>交易 API</td><td><strong>alpaca-py</strong></td><td>下單、帳戶查詢、歷史 OHLCV</td><td><span class="tag tag-b">≥ 0.26.0</span></td></tr>
+        <tr><td>市場資料</td><td><strong>yfinance</strong></td><td>基本面資料（EPS/ROE/P/E）、歷史資料</td><td><span class="tag tag-b">≥ 0.2.40</span></td></tr>
+        <tr><td>技術指標 🆕</td><td><strong>pandas-ta</strong></td><td>RSI/MACD/ADX/ATR/BB/OBV 指標計算</td><td><span class="tag tag-p">≥ 0.3.14b</span></td></tr>
+        <tr><td>數值計算 🆕</td><td><strong>numpy</strong></td><td>百分位排名、加權分數計算</td><td><span class="tag tag-b">≥ 1.26.0</span></td></tr>
+        <tr><td>Dashboard</td><td><strong>Streamlit</strong></td><td>視覺化儀錶板（Community Cloud 免費）</td><td><span class="tag tag-b">≥ 1.35.0</span></td></tr>
+        <tr><td>圖表</td><td><strong>Plotly</strong></td><td>NAV / RSI 熱力圖 / 雷達圖</td><td><span class="tag tag-b">≥ 5.20.0</span></td></tr>
+        <tr><td>資料處理</td><td><strong>Pandas</strong></td><td>OHLCV 處理、指標計算</td><td><span class="tag tag-b">≥ 2.2.0</span></td></tr>
+        <tr><td>Email 模板</td><td><strong>Jinja2</strong></td><td>HTML Email 渲染</td><td><span class="tag tag-b">≥ 3.1.0</span></td></tr>
+        <tr><td>CI/CD</td><td><strong>GitHub Actions</strong></td><td>每週再平衡 + 每日停損監控</td><td><span class="tag tag-g">免費</span></td></tr>
+        <tr><td>測試</td><td><strong>pytest + responses</strong></td><td>100+ 自動化測試</td><td><span class="tag tag-b">≥ 8.0.0</span></td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:16px;background:var(--warning-light);border:1px solid #fcd34d;border-radius:10px;padding:14px 18px;">
+      <strong style="color:#92400e;">📌 requirements.txt 新增項目：</strong>
+      <code style="background:rgba(0,0,0,.06);padding:2px 6px;border-radius:4px;font-size:13px;">pandas-ta&gt;=0.3.14b numpy&gt;=1.26.0</code>
+    </div>
+  </section>
+
+  <!-- ── 8. DIRECTORY ── -->
+  <section id="directory">
+    <h2>📁 目錄結構（v2）</h2>
+    <p class="subtitle">新增模組以 🆕 標示</p>
+    <div class="dir-tree">
+<span class="dir">aietf/</span>
+├── <span class="file">main.py</span>
+├── <span class="file">streamlit_app.py</span>
+├── <span class="file">requirements.txt</span>          <span class="cm">← 新增 pandas-ta, numpy</span>
+├── <span class="file">CLAUDE.md</span>                  <span class="cm">← 更新 v2 架構記憶</span>
+│
+├── <span class="dir">strategies/</span>
+│   ├── <span class="file">top10_marketcap.json</span>     <span class="cm">← 原有簡單策略</span>
+│   └── <span class="new">toprank_ma_momentum_v2.json</span>  <span class="cm">← 🆕 進階策略（Schema v2）</span>
+│
+├── <span class="dir">accounts/</span>
+│   └── <span class="file">accounts_index.json</span>
+│
+├── <span class="dir">reports/YYYY-MM-DD/</span>
+│   ├── <span class="file">model_account_A.json</span>     <span class="cm">← 新增 rank_table / stop_prices</span>
+│   └── <span class="file">email_account_A.html</span>
+│
+├── <span class="dir">src/</span>
+│   ├── <span class="dir">data/</span>
+│   │   ├── <span class="file">alpaca_client.py</span>
+│   │   ├── <span class="file">market_data.py</span>
+│   │   ├── <span class="new">fundamental.py</span>           <span class="cm">← 🆕 yfinance 基本面</span>
+│   │   ├── <span class="new">indicators.py</span>            <span class="cm">← 🆕 13 種技術指標</span>
+│   │   ├── <span class="file">benchmark.py</span>
+│   │   └── <span class="file">demo_data.py</span>
+│   │
+│   ├── <span class="dir">engine/</span>
+│   │   ├── <span class="file">strategy_loader.py</span>
+│   │   ├── <span class="file">account_manager.py</span>
+│   │   ├── <span class="new">universe_filter.py</span>       <span class="cm">← 🆕 宇宙過濾</span>
+│   │   ├── <span class="new">ranker.py</span>                <span class="cm">← 🆕 加權百分位排名</span>
+│   │   ├── <span class="new">signal_engine.py</span>         <span class="cm">← 🆕 進出場訊號</span>
+│   │   ├── <span class="new">risk_manager.py</span>          <span class="cm">← 🆕 日損/回撤熔斷</span>
+│   │   ├── <span class="file">rebalancer.py</span>
+│   │   └── <span class="file">trader.py</span>
+│   │
+│   ├── <span class="dir">report/</span>
+│   │   ├── <span class="file">model.py</span>                 <span class="cm">← 新增 rank_table / stop_prices</span>
+│   │   └── <span class="file">view_email.py</span>
+│   │
+│   ├── <span class="dir">dashboard/</span>
+│   │   ├── <span class="file">data.py</span>
+│   │   └── <span class="file">app.py</span>                   <span class="cm">← 新增 RSI熱力圖 / 排名雷達</span>
+│   │
+│   ├── <span class="dir">notify/</span>
+│   │   ├── <span class="file">email_sender.py</span>
+│   │   ├── <span class="file">trade_alert.py</span>
+│   │   ├── <span class="new">stop_alert.py</span>            <span class="cm">← 🆕 停損觸發通知</span>
+│   │   └── <span class="new">risk_alert.py</span>            <span class="cm">← 🆕 回撤超限警報</span>
+│   │
+│   ├── <span class="new">backtest/</span>                    <span class="cm">← 🆕 回測框架</span>
+│   │   └── <span class="new">runner.py</span>
+│   │
+│   └── <span class="dir">tests/</span>
+│       ├── <span class="file">test_phase1.py ~ test_phase7.py</span>
+│       ├── <span class="new">test_phase3_indicators.py</span>   <span class="cm">← 🆕</span>
+│       ├── <span class="new">test_phase4_ranker.py</span>       <span class="cm">← 🆕</span>
+│       ├── <span class="new">test_phase5_signal.py</span>       <span class="cm">← 🆕</span>
+│       ├── <span class="new">test_phase6_rebalance.py</span>    <span class="cm">← 🆕</span>
+│       ├── <span class="new">test_phase7_report.py</span>       <span class="cm">← 🆕</span>
+│       └── <span class="new">test_phase8_integration.py</span>  <span class="cm">← 🆕</span>
+│
+├── <span class="dir">.github/workflows/</span>
+│   ├── <span class="file">daily_workflow.yml</span>         <span class="cm">← 原有（demo/dry_run/live）</span>
+│   ├── <span class="new">weekly_rebalance.yml</span>       <span class="cm">← 🆕 週一完整再平衡</span>
+│   └── <span class="new">daily_monitor.yml</span>          <span class="cm">← 🆕 週二～五停損監控</span>
+│
+└── <span class="dir">.streamlit/config.toml</span>
+    </div>
+  </section>
+
+  <!-- ── 9. ENV VARS ── -->
+  <section id="envvars">
+    <h2>🔐 環境變數 / GitHub Secrets</h2>
+    <p class="subtitle">v2 新增風控相關設定</p>
+    <table>
+      <thead><tr><th>變數名稱</th><th>說明</th><th>必要性</th></tr></thead>
+      <tbody>
+        <tr><td><code>ALPACA_KEY_A</code></td><td>帳戶 A Alpaca API Key</td><td><span class="tag tag-o">dry_run/live 必要</span></td></tr>
+        <tr><td><code>ALPACA_SECRET_A</code></td><td>帳戶 A Alpaca Secret</td><td><span class="tag tag-o">dry_run/live 必要</span></td></tr>
+        <tr><td><code>ALPACA_URL_A</code></td><td>API Base URL</td><td><span class="tag tag-b">預設 paper-api</span></td></tr>
+        <tr><td><code>EMAIL_USER</code></td><td>Gmail 發信帳號</td><td><span class="tag tag-g">可選</span></td></tr>
+        <tr><td><code>EMAIL_PASS</code></td><td>Gmail 應用程式密碼</td><td><span class="tag tag-g">可選</span></td></tr>
+        <tr><td><code>DEMO_MODE</code></td><td>true = 假資料，不需 API Key</td><td><span class="tag tag-b">workflow 自動設定</span></td></tr>
+        <tr><td><code>DRY_RUN</code></td><td>true = 計算但不下單</td><td><span class="tag tag-b">預設 true</span></td></tr>
+        <tr><td><code>ACCOUNT_FILTER</code></td><td>指定單一帳戶（空=全部）</td><td><span class="tag tag-g">可選</span></td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:24px;background:var(--gray-light);border-radius:12px;padding:22px;">
+      <h3 style="font-size:.85rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--gray);margin-bottom:14px;">⏰ GitHub Actions Cron 時程</h3>
+      <div class="grid-2">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="font-weight:700;color:var(--primary);margin-bottom:6px;">📅 weekly_rebalance.yml</div>
+          <div style="font-size:13px;color:var(--gray);">cron: <code>'45 13 * * 1'</code><br>週一 UTC 13:45 = 美東 09:45 = 台灣 21:45<br>執行完整再平衡（選股+換倉）</div>
+        </div>
+        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;">
+          <div style="font-weight:700;color:var(--warning);margin-bottom:6px;">🛡️ daily_monitor.yml</div>
+          <div style="font-size:13px;color:var(--gray);">cron: <code>'30 14 * * 2-5'</code><br>週二～五 UTC 14:30 = 美東 10:30 = 台灣 22:30<br>僅執行停損/止盈/風控檢查</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 10. DISCLAIMER ── -->
+  <section id="disclaimer">
+    <h2>⚠️ 免責聲明</h2>
+    <div class="disclaimer">
+      <strong>⚠️ 重要提醒：本系統所有輸出均僅供資訊整理與研究參考，不構成任何投資建議。</strong>
+      本系統所產生的選股排名、技術指標分析、績效數據、停損建議、Email 通知及 Dashboard 顯示內容，
+      均不構成任何形式的投資建議或操作指示。技術指標（RSI、MACD、均線等）為統計工具，過去訊號不代表未來有效。
+      股票投資涉及市場風險，價格可能劇烈波動。使用者應根據自身財務狀況、風險承受能力及獨立判斷做出投資決策。
+      <br><br>
+      投資有風險，請謹慎評估。本系統開發者不對任何因使用本系統而產生的投資損失負責。
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <p>AlpacaBot v2 — 全自動美股投資系統（進階策略版）&nbsp;|&nbsp;
+  <a href="https://github.com/itemhsu/aietf">GitHub: itemhsu/aietf</a> &nbsp;|&nbsp;
+  Strategy Schema: toprank_ma_momentum_v2 &nbsp;|&nbsp;
+  <a href="https://alpaca.markets">Alpaca Markets</a></p>
+  <p style="margin-top:8px;font-size:12px;">所有內容僅供資訊整理與研究參考，不構成投資建議。投資有風險，請謹慎評估。</p>
+</footer>
+
+</body>
+</html>
