@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-07-12",
+  "last_updated": "2026-07-13",
   "reports": [
     {
       "date": "2026-05-24",
@@ -215,6 +215,12 @@
       "date": "2026-07-12",
       "account_id": "account_A",
       "path": "reports/2026-07-12/model_account_A.json",
+      "nav": 102345.67
+    },
+    {
+      "date": "2026-07-13",
+      "account_id": "account_A",
+      "path": "reports/2026-07-13/model_account_A.json",
       "nav": 102345.67
     }
   ]
