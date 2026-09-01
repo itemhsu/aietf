@@ -3,7 +3,7 @@
   "account_id": "account_A",
   "strategy_id": "top10_marketcap_v1",
   "date": "2026-09-01",
-  "generated_at": "2026-09-01T00:54:54.924274",
+  "generated_at": "2026-09-01T23:41:22.185700",
   "account_summary": {
     "nav": 102345.67,
     "cash": 1023.45,
@@ -939,6 +939,10 @@
     },
     {
       "date": "2026-08-31",
+      "nav": 102345.67
+    },
+    {
+      "date": "2026-09-01",
       "nav": 102345.67
     },
     {
